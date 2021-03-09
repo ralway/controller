@@ -29,8 +29,12 @@ class Display:
 
             i = 0
             if len(lines) > 1:
-                for t in args.text[1:]:
-                    for s in textwrap.wrap(t, width=24):
+                for t in lines[1:]:
+                    try:
+                        t = textwrap.wrap(t, width=24) 
+                    except AttributeError:
+                        t = []
+                    for s in t:
                         self.draw.text((0, 16 + 8*i), s, font=self.font_small, fill=255)
                         if s:
                             i += 1
