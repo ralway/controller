@@ -5,6 +5,8 @@ from time import sleep
 from subprocess import run, PIPE
 from socket import socket, timeout, AF_INET, SOCK_STREAM
 
+from display import Display
+
 STOPPED = 0
 STARTING = 1
 CONNECTING = 2
@@ -26,6 +28,7 @@ led = gpiozero.RGBLED(22, 27, 17)
 state = STOPPED
 delay = 1 / 5 #Hz
 
+display = Display()
 
 while True:
     r = run(['pgrep', '-f', 'jmri.jar'], stdout=PIPE)
@@ -57,23 +60,48 @@ while True:
     if state == STARTING:
         led.color = AMBER
         delay = 1 / 4 #Hz
+        state_text = 'JMRI Starting'
     elif state == CONNECTING:
         led.color = YELLOW
         delay = 1 / 6 #Hz
+        state_text = 'JMRI Connecting'
     elif state == RUNNING:
         led.color = GREEN
         delay = 5
+        state_text = 'JMRI Running'
     elif state == STOPPED:
         led.color = RED
         delay = 1 / 2 #Hz
+        state_text = 'JMRI Stopped'
     elif state == ERROR:
         led.color = PURPLE
         delay = 1 / 8 #Hz
+        state_text = 'Error'
     else:
         led.color = PURPLE
         delay = 1 / 16 #Hz
+        state_text = 'Unknown Error'
 
-    #print(state, delay)
+    session_log = []
+    try:
+        with open('/home/pi/.jmri/log/session.log') as f:
+            session_log = f.readlines()
+    except FileNotFoundError:
+        pass
+
+    if session_log:
+        session_head = [ l for l in session_log if 'ERROR' in l ]
+        if session_head:
+            session_head = session_head[0]
+
+        session_tail = session_log[-1]
+
+        log_line = session_tail
+        if state in (STOPPED, ERROR):
+            log_line = session_head
+
+        display.write_lines([state_text, log_line[62:]])
+
     sleep(delay)
 
     if state == RUNNING:
