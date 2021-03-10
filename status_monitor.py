@@ -33,6 +33,29 @@ delay = 1 / 5 #Hz
 display = Display()
 
 
+def get_log_line(first_error=False):
+    session_log = []
+    try:
+        with open('/home/pi/.jmri/log/session.log') as f:
+            session_log = f.readlines()
+    except FileNotFoundError:
+        return 'Session log not found.'
+
+    # Remove lines which are parts of stack traces
+    session_log = [ l for l in session_log if not l.startswith('    ') ]
+
+    if session_log:
+        session_error = [ l for l in session_log if 'ERROR' in l ][0]
+        session_tail = session_log[-1]
+
+        if first_error:
+            return session_error[62:]
+
+        return session_tail[62:]
+
+    return 'Session log empty.'
+
+
 SIG_LUT = list(range(1, 64))
 SIG_LUT[2] = 'Monitor interrupted by Keyboard.'
 SIG_LUT[15] = 'The system is shutting down.'
@@ -100,25 +123,11 @@ while RUN:
         delay = 1 / 16 #Hz
         state_text = 'Unknown Error'
 
-    session_log = []
-    try:
-        with open('/home/pi/.jmri/log/session.log') as f:
-            session_log = f.readlines()
-    except FileNotFoundError:
-        pass
 
-    if session_log:
-        session_head = [ l for l in session_log if 'ERROR' in l ]
-        if session_head:
-            session_head = session_head[0]
-
-        session_tail = session_log[-1]
-
-        log_line = session_tail
-        if state in (STOPPED, ERROR):
-            log_line = session_head
-
-        display.write_lines([state_text, log_line[62:]])
+    log_line = '…'
+    if state != STARTING:
+        log_line = get_log_line(state == ERROR)
+    display.write_lines([state_text, log_line])
 
     sleep(delay)
 
