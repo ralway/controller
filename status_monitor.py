@@ -80,7 +80,7 @@ def get_log_line(first_error=False):
         return 'Session log not found.'
 
     # Remove lines which are parts of stack traces
-    session_log = [ l for l in session_log if not l.startswith('    ') ]
+    session_log = [ l.strip() for l in session_log if l.startswith('20') ]
 
     if session_log:
         session_error = [ l for l in session_log if 'ERROR' in l ][0]
