@@ -9,7 +9,7 @@ from display import Display
 
 STOPPED = 0
 STARTING = 1
-CONNECTING = 2
+INITIALISING = 2
 RUNNING = 3
 ERROR = 4
 
@@ -51,7 +51,7 @@ while True:
                         break
                 s.close()
             except timeout:
-                state = CONNECTING
+                state = INITIALISING
         except ConnectionRefusedError:
             state = STARTING
     except ValueError:
@@ -61,10 +61,10 @@ while True:
         led.color = AMBER
         delay = 1 / 4 #Hz
         state_text = 'JMRI Starting'
-    elif state == CONNECTING:
+    elif state == INITIALISING:
         led.color = YELLOW
         delay = 1 / 6 #Hz
-        state_text = 'JMRI Connecting'
+        state_text = 'Initialising'
     elif state == RUNNING:
         led.color = GREEN
         delay = 5
