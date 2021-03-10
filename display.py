@@ -42,10 +42,20 @@ class Display:
         self.oled.image(self.image)
         self.oled.show()
 
+    def dim(self):
+        self.oled.contrast(1)
+
+    def bright(self):
+        self.oled.contrast(255)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Display text on the front panel OLED.')
     parser.add_argument('text', metavar='TITLE', nargs='+', help='Text to display. Title followed by lines of body.')
+    parser.add_argument('--dim', action='store_true', help='Dim the display.')
     args = parser.parse_args()
 
-    Display().write_lines(args.text)
+    d = Display()
+    if args.dim:
+        d.dim()
+    d.write_lines(args.text)
