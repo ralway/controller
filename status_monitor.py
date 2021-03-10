@@ -5,7 +5,10 @@ import signal
 import gpiozero
 from time import sleep
 from subprocess import run, PIPE
-from socket import socket, timeout, AF_INET, SOCK_STREAM
+from urllib.request import urlopen
+from urllib.error import URLError
+from json import load
+from json.decoder import JSONDecodeError
 
 from display import Display
 
@@ -75,26 +78,17 @@ while RUN:
     r = run(['pgrep', '-f', 'jmri.jar'], stdout=PIPE)
     try:
         int(r.stdout)
-        state = ERROR
+        state = INITIALISING
         try:
-            s = socket(AF_INET, SOCK_STREAM)
-            s.settimeout(0.25)
-            try:
-                s.connect(('localhost', 12090))
-                s.recv(1, 2048)
-                state = STARTING
-                chunk = None
-                while s and chunk != b'':
-                    chunk = s.recv(2048, 2048)
-                    if b'PW12080' in chunk:
-                        s.send(b'Q\n')
-                        state = RUNNING
-                        break
-                s.close()
-            except timeout:
-                state = INITIALISING
+            with urlopen('http://localhost:12080/json/metadata') as u:
+                load(u)
+                state = RUNNING
+        except JSONDecodeError:
+            state = ERROR
         except ConnectionRefusedError:
-            state = STARTING
+            pass
+        except URLError:
+            pass
     except ValueError:
         state = STOPPED
 
