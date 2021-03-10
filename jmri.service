@@ -1,0 +1,14 @@
+[Unit]
+Description=JMRI Faceless
+StartLimitIntervalSec=1m
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/home/pi/bin/JMRI/JmriFaceless
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

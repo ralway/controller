@@ -1,0 +1,13 @@
+[Unit]
+Description=Monitor JMRI and show status on RGB LED and OLED display
+
+[Service]
+Type=simple
+User=pi
+ExecStartPre=/home/pi/bin/display.py "Please Wait" "The system is coming up."
+ExecStart=/home/pi/bin/status_monitor.py
+ExecStopPost=/home/pi/bin/display.py "Shut down" "The monitor has stopped."
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
