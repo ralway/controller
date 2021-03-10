@@ -36,6 +36,18 @@ delay = 1 / 5 #Hz
 display = Display()
 
 
+def get_throttle_count():
+    netstat = run(['/bin/netstat', '-t', '--numeric-ports'], stdout=PIPE)
+
+    c = 0
+    if netstat.stdout:
+        for l in netstat.stdout.splitlines():
+            if b':12090' in l and l.endswith(b'ESTABLISHED'):
+                c += 1
+
+    return c
+
+
 def get_jmri_state():
     r = run(['systemctl', 'show', 'jmri.service'], stdout=PIPE)
     if r.stdout:
@@ -114,6 +126,8 @@ signal.signal(signal.SIGTERM, signal_handler)
 while RUN:
     state = get_jmri_state()
 
+    throttles = ''
+
     if state == STARTING:
         led.color = AMBER
         delay = 1 / 4 #Hz
@@ -126,6 +140,11 @@ while RUN:
         led.color = GREEN
         delay = 5
         state_text = 'JMRI Running'
+        tc = get_throttle_count()
+        if tc > 1:
+            throttles = '%d active throttles' % tc
+        elif tc == 1:
+            throttles = '%d active throttle' % tc
     elif state == STOPPED:
         led.color = RED
         delay = 1 / 2 #Hz
@@ -143,7 +162,7 @@ while RUN:
     log_line = '…'
     if state != STARTING:
         log_line = get_log_line(state == ERROR)
-    display.write_lines([state_text, log_line])
+    display.write_lines([state_text, throttles, log_line])
 
     sleep(delay)
 
