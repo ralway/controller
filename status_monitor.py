@@ -83,11 +83,13 @@ def get_log_line(first_error=False):
     session_log = [ l.strip() for l in session_log if l.startswith('20') ]
 
     if session_log:
-        session_error = [ l for l in session_log if 'ERROR' in l ][0]
+        session_errors = [ l for l in session_log if 'ERROR' in l ]
         session_tail = session_log[-1]
 
         if first_error:
-            return session_error[62:]
+            if session_errors:
+                return session_errors[0][62:]
+            return 'No errors in session log'
 
         return session_tail[62:]
 
