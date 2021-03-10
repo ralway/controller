@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import signal
+
 import gpiozero
 from time import sleep
 from subprocess import run, PIPE
@@ -30,7 +32,23 @@ delay = 1 / 5 #Hz
 
 display = Display()
 
-while True:
+
+SIG_LUT = list(range(1, 64))
+SIG_LUT[2] = 'Monitor interrupted by Keyboard.'
+SIG_LUT[15] = 'The system is shutting down.'
+
+RUN = True
+
+def signal_handler(i, _):
+    global RUN
+    display.write_lines(['Please Wait', SIG_LUT[i]])
+    RUN = False
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
+
+while RUN:
     r = run(['pgrep', '-f', 'jmri.jar'], stdout=PIPE)
     try:
         int(r.stdout)
