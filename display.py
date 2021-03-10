@@ -13,7 +13,6 @@ from board import SCL, SDA
 class Display:
     def __init__(self):
         self.oled = adafruit_ssd1306.SSD1306_I2C(128, 64, busio.I2C(SCL, SDA))
-        self.oled.fill(0)
 
         self.font_large = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 14)
         self.font_small = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 9)
