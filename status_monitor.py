@@ -75,22 +75,36 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 
 while RUN:
-    r = run(['pgrep', '-f', 'jmri.jar'], stdout=PIPE)
-    try:
-        int(r.stdout)
-        state = INITIALISING
-        try:
-            with urlopen('http://localhost:12080/json/metadata') as u:
-                load(u)
-                state = RUNNING
-        except JSONDecodeError:
-            state = ERROR
-        except ConnectionRefusedError:
-            pass
-        except URLError:
-            pass
-    except ValueError:
-        state = STOPPED
+    r = run(['systemctl', 'show', 'jmri.service'], stdout=PIPE)
+    if r.stdout:
+        state = ERROR
+        status = r.stdout.splitlines()
+        status = { j[0]: j[1] for j in [ i.split(b'=') for i in status ] }
+
+        if status[b'ActiveState'] == b'active':
+            state = STARTING
+            if status[b'SubState'] == b'running':
+                state = INITIALISING
+                try:
+                    with urlopen('http://localhost:12080/json/metadata') as u:
+                        load(u)
+                        state = RUNNING
+                except JSONDecodeError:
+                    state = ERROR
+                except ConnectionRefusedError:
+                    pass
+                except URLError:
+                    pass
+
+        elif status[b'ActiveState'] == b'activating':
+            state = STARTING
+
+        elif status[b'ActiveState'] == b'inactive':
+            state = STOPPED
+            if status[b'SubState'] == b'failed':
+                state = ERROR
+    else:
+        state = ERROR
 
     if state == STARTING:
         led.color = AMBER
