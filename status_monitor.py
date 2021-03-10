@@ -117,6 +117,7 @@ RUN = True
 def signal_handler(i, _):
     global RUN
     display.write_lines(['Please Wait', SIG_LUT[i]])
+    display.dim()
     RUN = False
 
 signal.signal(signal.SIGINT, signal_handler)
